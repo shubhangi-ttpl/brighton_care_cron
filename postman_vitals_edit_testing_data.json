@@ -1,0 +1,306 @@
+{
+  "info": {
+    "name": "Edit Vitals - Postman Testing Data",
+    "description": "Postman collection for testing Edit Vitals functionality",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Edit Vitals - Complete Data",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer YOUR_AUTH_TOKEN_HERE",
+            "description": "Replace with actual auth token"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"date\": \"2024-01-15T10:30:00.000Z\",\n  \"time\": \"10:30 AM\",\n  \"weight\": 75.5,\n  \"temperature\": 98.6,\n  \"temperatureType\": \"Fahrenheit\",\n  \"pulse\": 72,\n  \"systolicBloodPressure\": 120,\n  \"diastolicBloodPressure\": 80,\n  \"bloodPressurePosition\": \"Sitting\",\n  \"respiratoryRate\": 18,\n  \"oxygenSaturation\": 98,\n  \"oxygenSaturationUnit\": \"%\",\n  \"bloodSugar\": 95,\n  \"bloodSugarCondition\": \"Normal\",\n  \"note\": \"Patient appears healthy. All vitals within normal range.\",\n  \"residentId\": 1\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/vitals/:id",
+          "host": ["{{baseUrl}}"],
+          "path": ["vitals", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1",
+              "description": "Vitals record ID to update"
+            }
+          ]
+        },
+        "description": "Complete vitals update with all fields"
+      }
+    },
+    {
+      "name": "Edit Vitals - Partial Update (PATCH)",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer YOUR_AUTH_TOKEN_HERE"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"temperature\": 99.2,\n  \"pulse\": 85,\n  \"note\": \"Patient has slight fever. Monitoring closely.\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/vitals/:id",
+          "host": ["{{baseUrl}}"],
+          "path": ["vitals", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1"
+            }
+          ]
+        },
+        "description": "Partial update using PATCH method"
+      }
+    },
+    {
+      "name": "Edit Vitals - Blood Pressure Only",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer YOUR_AUTH_TOKEN_HERE"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"systolicBloodPressure\": 130,\n  \"diastolicBloodPressure\": 85,\n  \"bloodPressurePosition\": \"Standing\",\n  \"note\": \"Blood pressure slightly elevated. Patient was standing during measurement.\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/vitals/:id",
+          "host": ["{{baseUrl}}"],
+          "path": ["vitals", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1"
+            }
+          ]
+        },
+        "description": "Update only blood pressure fields"
+      }
+    },
+    {
+      "name": "Edit Vitals - Temperature Update",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer YOUR_AUTH_TOKEN_HERE"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"temperature\": 37.5,\n  \"temperatureType\": \"Celsius\",\n  \"note\": \"Temperature converted to Celsius\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/vitals/:id",
+          "host": ["{{baseUrl}}"],
+          "path": ["vitals", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1"
+            }
+          ]
+        },
+        "description": "Update temperature with Celsius type"
+      }
+    },
+    {
+      "name": "Edit Vitals - Oxygen Saturation",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer YOUR_AUTH_TOKEN_HERE"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"oxygenSaturation\": 96,\n  \"oxygenSaturationUnit\": \"%\",\n  \"respiratoryRate\": 20,\n  \"note\": \"Oxygen saturation slightly low. Patient on room air.\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/vitals/:id",
+          "host": ["{{baseUrl}}"],
+          "path": ["vitals", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1"
+            }
+          ]
+        },
+        "description": "Update oxygen saturation and respiratory rate"
+      }
+    },
+    {
+      "name": "Edit Vitals - Blood Sugar",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer YOUR_AUTH_TOKEN_HERE"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"bloodSugar\": 140,\n  \"bloodSugarCondition\": \"Pre-diabetic\",\n  \"note\": \"Blood sugar elevated. Patient advised to monitor diet.\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/vitals/:id",
+          "host": ["{{baseUrl}}"],
+          "path": ["vitals", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1"
+            }
+          ]
+        },
+        "description": "Update blood sugar reading"
+      }
+    },
+    {
+      "name": "Edit Vitals - Weight Update",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer YOUR_AUTH_TOKEN_HERE"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"weight\": 76.2,\n  \"date\": \"2024-01-16T08:00:00.000Z\",\n  \"time\": \"8:00 AM\",\n  \"note\": \"Weight check - slight increase noted.\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/vitals/:id",
+          "host": ["{{baseUrl}}"],
+          "path": ["vitals", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1"
+            }
+          ]
+        },
+        "description": "Update weight with date and time"
+      }
+    },
+    {
+      "name": "Edit Vitals - Minimal Fields",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer YOUR_AUTH_TOKEN_HERE"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"pulse\": 70,\n  \"note\": \"Routine check\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/vitals/:id",
+          "host": ["{{baseUrl}}"],
+          "path": ["vitals", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1"
+            }
+          ]
+        },
+        "description": "Minimal update with only pulse and note"
+      }
+    },
+    {
+      "name": "Edit Vitals - All Nullable Fields",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer YOUR_AUTH_TOKEN_HERE"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"date\": \"2024-01-15T14:00:00.000Z\",\n  \"time\": \"2:00 PM\",\n  \"weight\": null,\n  \"temperature\": null,\n  \"temperatureType\": null,\n  \"pulse\": null,\n  \"systolicBloodPressure\": null,\n  \"diastolicBloodPressure\": null,\n  \"bloodPressurePosition\": null,\n  \"respiratoryRate\": null,\n  \"oxygenSaturation\": null,\n  \"oxygenSaturationUnit\": null,\n  \"bloodSugar\": null,\n  \"bloodSugarCondition\": null,\n  \"note\": \"Cleared all vitals readings\",\n  \"residentId\": 1\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/vitals/:id",
+          "host": ["{{baseUrl}}"],
+          "path": ["vitals", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1"
+            }
+          ]
+        },
+        "description": "Test with null values for optional fields"
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ]
+}

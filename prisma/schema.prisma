@@ -1,0 +1,807 @@
+
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+model Address {
+  id           Int       @id @default(autoincrement()) @map("id")
+  addressLine1 String?   @map("address_line_1") @db.VarChar(255)
+  addressLine2 String?   @map("address_line_2") @db.VarChar(255)
+  city         String?   @map("city") @db.VarChar(255)
+  state        String?   @map("state") @db.VarChar(255)
+  country      String?   @map("country") @db.VarChar(255)
+  zipCode      String?   @map("zip_code") @db.VarChar(20)
+  apt          String?   @map("apt") @db.VarChar(50)
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime? @map("updated_at")
+
+  // Relations
+  facilities        Facility[]
+  users             User[]
+  resident          Resident[]
+  responsiblePerson ResponsiblePerson[]
+
+  @@map("address")
+}
+
+model Facility {
+  id        Int       @id @default(autoincrement()) @map("id")
+  name      String?   @map("name") @db.VarChar(255)
+  addressId Int?      @map("address_id")
+  contact   String?   @map("contact") @db.VarChar(255)
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @map("updated_at")
+
+  // Relation
+  address     Address?      @relation(fields: [addressId], references: [id])
+  users       User[]
+  room        Room[]
+  downTimeMar DownTimeMar[]
+
+  @@map("facility")
+}
+
+model Role {
+  id          Int       @id @default(autoincrement()) @map("id")
+  name        String?   @map("name") @db.VarChar(255)
+  description String?   @map("description") @db.VarChar(255)
+  status      String?   @map("status") @db.VarChar(50)
+  isDeleted   Boolean?  @map("is_deleted")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime? @map("updated_at")
+
+  users User[]
+
+  @@map("role")
+}
+
+model User {
+  id           Int      @id @default(autoincrement()) @map("id")
+  tokenVersion Int?      @default(0) @map("token_version")
+  firstName    String?  @map("first_name") @db.VarChar(255)
+  lastName     String?  @map("last_name") @db.VarChar(255)
+  email        String?  @map("email") @db.VarChar(255)
+  roleId       Int?     @map("role_id")
+  status       String?  @map("status") @db.VarChar(50)
+  isDeleted    Boolean? @map("is_deleted")
+  username     String?  @map("username") @db.VarChar(255)
+  password     String?  @map("password") @db.VarChar(255)
+  addressId    Int?     @map("address_id")
+  isRememberMe Boolean? @map("is_remember_me")
+  facilityId   Int?     @map("facility_id")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @map("updated_at")
+
+  // Relations
+  address  Address?      @relation(fields: [addressId], references: [id])
+  facility Facility?     @relation(fields: [facilityId], references: [id])
+  role     Role?         @relation(fields: [roleId], references: [id])
+  downTime DownTimeMar[]
+  audit     Audit[]
+  otp      Otp[]
+
+  // Residents created/updated by this user (one-to-many)
+  residentsCreated Resident[] @relation("ResidentCreator")
+  residentsUpdated Resident[] @relation("ResidentUpdater")
+  notesCreated Notes[] @relation("NotesCreator")
+  notesUpdated Notes[] @relation("NotesUpdater")
+  commentsCreated Comments[] @relation("CommentsCreator")
+  commentsUpdated Comments[] @relation("CommentsUpdater")
+  incidentsCreated Incidents[] @relation("IncidentsCreator")
+  incidentsUpdated Incidents[] @relation("IncidentsUpdater")
+  vitalsCreated Vitals[] @relation("VitalsCreator")
+  vitalsUpdated Vitals[] @relation("VitalsUpdater")
+  shiftSupervisor Incidents[] @relation("ShiftSupervisor")
+  incidentAlertsCreated IncidentAlert[] @relation("IncidentAlertCreator")
+  incidentAlertsUpdated IncidentAlert[] @relation("IncidentAlertUpdater")
+  
+  // Immunizations administered by this user
+  immunizationsAdministered Immunization[]
+  careplansCreated Careplan[] @relation("CareplanCreator")
+  careplansUpdated Careplan[] @relation("CareplanUpdater")
+  residentStoryCreated ResidentStory[] @relation("ResidentStoryCreator")
+  residentStoryUpdated ResidentStory[] @relation("ResidentStoryUpdater")
+  assignedSchedules Schedule[] @relation("AssignedStaff")
+
+  @@map("users")
+  responsiblePersonsCreated ResponsiblePerson[] @relation("ResponsiblePersonCreator")
+  responsiblePersonsUpdated ResponsiblePerson[] @relation("ResponsiblePersonUpdater")
+}
+
+model Room {
+  id         Int       @id @default(autoincrement()) @map("id")
+  roomNumber String?   @map("room_number")
+  roomType   String?   @map("room_type") @db.VarChar(255)
+  status     String?   @map("status") @db.VarChar(50)
+  facilityId Int?      @map("facility_id")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime? @map("updated_at")
+
+  //Relation
+  facility                 Facility?                  @relation(fields: [facilityId], references: [id])
+  intermediateRoomResident IntermediateRoomResident[]
+
+  @@map("room")
+}
+
+model Resident {
+  id                        Int       @id @default(autoincrement()) @map("id")
+  profileImage              String?   @map("profile_image") @db.VarChar(255)
+  firstName                 String?   @map("first_name") @db.VarChar(255)
+  lastName                  String?   @map("last_name") @db.VarChar(255)
+  ssn                       String?   @map("ssn") @db.VarChar(50)
+  dateOfBirth               DateTime? @map("date_of_birth")
+  gender                    String?   @map("gender") @db.VarChar(50)
+  pronouns                  String?   @map("pronouns") @db.VarChar(50)
+  maritalStatus             String?   @map("marital_status") @db.VarChar(50)
+  contactNumber             String?   @map("contact_number") @db.VarChar(50)
+  isMarkedAsAway            Boolean?  @map("is_marked_as_away")
+  signature                 String?   @map("signature") @db.VarChar(255)
+  mrn                       String?   @map("mrn") @db.VarChar(255)
+  moveStatus                String?   @map("move_status") @db.VarChar(50)
+  status                    String?   @map("status") @db.VarChar(50)
+  source                    String?   @map("source") @db.VarChar(255)
+  profileComplete           String?   @map("profileComplete") @db.VarChar(10)
+  community                 String?   @map("community") @db.VarChar(255)
+  moveInDate                DateTime? @map("move_in_date")
+  isAsSoonAsPossible        Boolean   @default(false) @map("is_as_soon_as_possible")
+  summaryNotes              String?   @map("summary_notes") @db.VarChar(2000)
+  admissionType             String?   @map("admission_type") @db.VarChar(255)
+  effectiveStartDate        DateTime? @map("effective_start_date")
+  isRespite                 Boolean   @default(false) @map("is_respite")
+  isHospice                 Boolean   @default(false) @map("is_hospice")
+  moveOutReason             String?   @map("move_out_reason") @db.VarChar(255)
+  moveOutDate               DateTime? @map("move_out_date")
+  financialEffectiveEndDate DateTime? @map("financial_effective_end_date")
+  moveOutNotes              String?   @map("move_out_notes") @db.VarChar(2000)
+  careLevel                 String?   @map("care_level") @db.VarChar(255)
+  addressId  Int?      @map("address_id")
+  roomId     Int?      @map("room_id")
+  hospitalId Int?      @map("hospital_id")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime? @map("updated_at")
+
+  createdBy Int? @map("created_by")
+  updatedBy Int? @map("updated_by")
+
+  // Relations:
+  address                  Address?                   @relation(fields: [addressId], references: [id])
+  creator                  User?                      @relation("ResidentCreator", fields: [createdBy], references: [id])
+  updater                  User?                      @relation("ResidentUpdater", fields: [updatedBy], references: [id])
+  responsiblePerson        ResponsiblePerson[]
+  clinicalQuickRisk        ClinicalQuickRisk[]
+  payerAuthorization       PayerAuthorization[]
+  medication               Medication[]
+  PrnBaseline              PrnBaseline[]
+  orderServices            OrderServices[]
+  IntermediateRoomResident IntermediateRoomResident[]
+  assessmentSignature      AssessmentSignature[]
+  downTimeMar              DownTimeMar[]
+  riskFactor               RiskFactor[]
+  allergies                Allergies[]
+  intermediateDocuments    IntermediateDocuments[]
+  residentStory            ResidentStory[]
+  careplan                 Careplan[]
+  vitals                   Vitals[]
+  incidents                Incidents[]
+  schedule                 Schedule[]
+  notes                    Notes[]
+  admissionDetails         AdmissionDetails[]
+  diagnosesAndAllergies    DiagnosesAndAllergies[]
+  hospital                 Hospital?                  @relation("ResidentHospital", fields: [hospitalId], references: [id])
+  immunizations            Immunization[]
+  diets                    Diet[]
+  documents                Document[]
+  markedAsAway             MarkedAsAway[]
+
+  @@map("resident")
+}
+
+model ResponsiblePerson {
+  id                     Int       @id @default(autoincrement()) @map("id")
+  firstName              String?   @map("first_name") @db.VarChar(255)
+  lastName               String?   @map("last_name") @db.VarChar(255)
+  relationshipCategory   String?   @map("relationship_category") @db.VarChar(255)
+  specificRelationship   String?   @map("specific_relationship") @db.VarChar(255)
+  contactNumberType      String?   @map("contact_number_type") @db.VarChar(50)
+  contactNumber          String?   @map("contact_number") @db.VarChar(20)
+  email                  String?   @map("email") @db.VarChar(255)
+  isPrimary              Boolean?  @default(false) @map("is_primary")
+  isEmail                Boolean?  @default(false) @map("is_email")
+  isText                 Boolean?  @default(false) @map("is_text")
+  isPhone                Boolean?  @default(false) @map("is_phone")
+  isPhysicalMail         Boolean?  @default(false) @map("is_physical_mail")
+  contactType            String?   @default("primary") @map("contact_type") @db.VarChar(50)
+  title                  String?   @map("title") @db.VarChar(50)
+  fax                    String?   @map("fax") @db.VarChar(50)
+  primaryContactNumber   String?   @map("primary_contact_number") @db.VarChar(20)
+  primaryContactType     String?   @map("primary_contact_type") @db.VarChar(50)
+  secondaryContactNumber String?   @map("secondary_contact_number") @db.VarChar(20)
+  secondaryContactType   String?   @map("secondary_contact_type") @db.VarChar(50)
+  profession             String?   @map("profession") @db.VarChar(100)
+  clinicalSpeciality     String?   @map("clinical_speciality") @db.VarChar(100)
+  organizationName       String?   @map("organization_name") @db.VarChar(255)
+  roles                  Json?     @map("roles")
+  notes                  String?   @map("notes") @db.VarChar(2000)
+  addressId              Int?      @map("address_id")
+  residentId             Int?      @map("resident_id")
+  status                 String?   @map("status") @db.VarChar(50)
+  createdBy              Int?      @map("created_by")
+  updatedBy              Int?      @map("updated_by")
+  createdAt              DateTime  @default(now()) @map("created_at")
+  updatedAt              DateTime? @map("updated_at")
+
+  address  Address?  @relation(fields: [addressId], references: [id])
+  resident Resident? @relation(fields: [residentId], references: [id])
+  creator  User?     @relation("ResponsiblePersonCreator", fields: [createdBy], references: [id])
+  updater  User?     @relation("ResponsiblePersonUpdater", fields: [updatedBy], references: [id])
+
+  @@map("responsible_person")
+}
+
+model ClinicalQuickRisk {
+  id                Int       @id @default(autoincrement()) @map("id")
+  medicalConditions Json?     @map("medical_conditions")
+  allergies         Json?     @map("allergies")
+  assistiveDevices  Json?     @map("assistive_devices")
+  residentId        Int?      @map("resident_id")
+  status            String?   @map("status") @db.VarChar(50)
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime? @map("updated_at")
+
+  // Relation
+  resident Resident? @relation(fields: [residentId], references: [id])
+
+  @@map("clinical_quick_risk")
+}
+
+model PayerAuthorization {
+  id                    Int       @id @default(autoincrement()) @map("id")
+  insuranceName         String?   @map("insurance_name") @db.VarChar(255)
+  insuranceType         String?   @map("insurance_type") @db.VarChar(255)
+  holderName            String?   @map("holder_name") @db.VarChar(255)
+  insuranceDate         DateTime? @map("insurance_date")
+  relationshipToInsured String?   @map("relationship_to_insured") @db.VarChar(255)
+  status                String?   @map("status") @db.VarChar(50)
+  policyNumber          String?   @map("policy_number") @db.VarChar(255)
+  groupNumber           String?   @map("group_number") @db.VarChar(255)
+  memberId              String?   @map("member_number") @db.VarChar(255)
+  insuranceProvider     String?   @map("insurance_provider") @db.VarChar(255)
+  bin                   String?   @map("bin") @db.VarChar(255)
+  pcn                   String?   @map("pcn") @db.VarChar(255)
+  medicaidId            String?   @map("medicaid_id") @db.VarChar(255)
+  state                 String?   @map("state") @db.VarChar(255)
+  issueDate             DateTime? @map("issue_date")
+  endDate               DateTime? @map("end_date")
+  residentId            Int?      @map("resident_id")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime? @map("updated_at")
+
+  //Relation
+  resident Resident? @relation(fields: [residentId], references: [id])
+
+  @@map("payer_authorization")
+}
+
+model Medication {
+  id            Int       @id @default(autoincrement()) @map("id")
+  name          String?   @map("name") @db.VarChar(255)
+  dose          String?   @map("dose") @db.VarChar(255)
+  route         String?   @map("route") @db.VarChar(255)
+  prescriber    String?   @map("prescriber") @db.VarChar(255)
+  schedule      String?   @map("schedule") @db.VarChar(255)
+  recentChanges String?   @map("recent_changes") @db.VarChar(255)
+  status        String?   @map("status") @db.VarChar(50)
+  residentId    Int?      @map("resident_id")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime? @map("updated_at")
+  // Relationship
+  resident      Resident? @relation(fields: [residentId], references: [id])
+
+  @@map("medication")
+}
+
+model PrnBaseline {
+  id                Int       @id @default(autoincrement()) @map("id")
+  painBaseline      Json?     @map("pain_baseline")
+  agitationBaseline Json?     @map("agitation_baseline")
+  status            String?   @map("status") @db.VarChar(50)
+  residentId        Int?      @map("resident_id")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime? @map("updated_at")
+  //Relation
+  resident          Resident? @relation(fields: [residentId], references: [id])
+
+  @@map("prn_baseline")
+}
+
+model OrderServices {
+  id               Int       @id @default(autoincrement()) @map("id")
+  requiredServices Json?     @map("required_services")
+  isRegularVisit   Boolean?  @map("is_regular_visit")
+  status           String?   @map("status") @db.VarChar(50)
+  residentId       Int?      @map("resident_id")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime? @map("updated_at")
+
+  //Relation
+  resident Resident? @relation(fields: [residentId], references: [id])
+
+  @@map("order_services")
+}
+
+model IntermediateRoomResident {
+  id            Int       @id @default(autoincrement()) @map("id")
+  roomId        Int?      @map("room_id")
+  residentId    Int?      @map("resident_id")
+  mealTime      Json?   @map("meal_time")
+  occupancyType String?   @map("occupancy_type") @db.VarChar(100)
+  roomType      String?   @map("room_type") @db.VarChar(100)
+  status        String?   @map("status") @db.VarChar(50)
+  isPrimary     Boolean?  @map("is_primary") @default(false)
+  startDate     DateTime? @map("start_date")
+  endDate       DateTime? @map("end_date")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime? @map("updated_at")
+
+  // Relations
+  room     Room?     @relation(fields: [roomId], references: [id])
+  resident Resident? @relation(fields: [residentId], references: [id])
+
+  @@map("intermediate_room_resident")
+}
+
+model AssessmentSignature {
+  id            Int       @id @default(autoincrement()) @map("id")
+  residentId    Int?      @map("resident_id")
+  signedBy      String?   @map("signed_by") @db.VarChar(255)
+  signature     String?   @map("signature") @db.Text // base64 or SVG
+  signatureType String?   @map("signature_type") @db.VarChar(100)
+  status        String?   @map("status") @db.VarChar(50)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime? @map("updated_at")
+  // Relation
+  resident      Resident? @relation(fields: [residentId], references: [id])
+
+  @@map("assessment_signature")
+}
+
+model DownTimeMar {
+  id               Int       @id @default(autoincrement()) @map("id")
+  responsibleStaff String?   @map("responsible_staff") @db.VarChar(255)
+  userId           Int?
+  facilityId       Int?
+  location         String?   @map("location") @db.VarChar(255)
+  trackingProcess  String?   @map("tracking_process") @db.VarChar(255)
+  status           String?   @map("status") @db.VarChar(50)
+  residentId       Int?      @map("resident_id")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime? @map("updated_at")
+  // Relation
+  resident         Resident? @relation(fields: [residentId], references: [id])
+  responsibleUser  User?     @relation(fields: [userId], references: [id])
+  facility         Facility? @relation(fields: [facilityId], references: [id])
+
+  @@map("downtime_mar")
+}
+
+model RiskFactor {
+  id         Int       @id @default(autoincrement()) @map("id")
+  name       String?   @map("name") @db.VarChar(255)
+  severity   String?   @map("severity") @db.VarChar(100)
+  residentId Int?      @map("resident_id")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime? @map("updated_at")
+  // Relation
+  resident   Resident? @relation(fields: [residentId], references: [id])
+
+  @@map("risk_factor")
+}
+
+model Allergies {
+  id         Int       @id @default(autoincrement()) @map("id")
+  name       String?   @map("name") @db.VarChar(255)
+  type       String?   @map("type") @db.VarChar(100)
+  note       String?   @map("note") @db.VarChar(1000)
+  severity   String?   @map("severity") @db.VarChar(100)
+  residentId Int?      @map("resident_id")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime? @map("updated_at")
+
+  //Relation
+  resident Resident? @relation(fields: [residentId], references: [id])
+
+  @@map("resident_note")
+}
+
+model MasterDocuments {
+  id                    Int                     @id @default(autoincrement()) @map("id")
+  name                  String?                 @map("name") @db.VarChar(255)
+  type                  String?                 @map("type") @db.VarChar(100)
+  path                  String?                 @map("path") @db.VarChar(500)
+  description           String?                 @map("description") @db.VarChar(1000)
+  url                   String?                 @map("url") @db.VarChar(500)
+  createdAt             DateTime                @default(now()) @map("created_at")
+  updatedAt             DateTime?               @map("updated_at")
+  intermediateDocuments IntermediateDocuments[]
+
+  @@map("master_documents")
+}
+
+model IntermediateDocuments {
+  id               Int              @id @default(autoincrement()) @map("id")
+  masterDocumentId Int?             @map("master_document_id")
+  status           String?          @map("status") @db.VarChar(50)
+  residentId       Int?             @map("resident_id")
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime?        @map("updated_at")
+  masterDocument   MasterDocuments? @relation(fields: [masterDocumentId], references: [id])
+  resident         Resident?        @relation(fields: [residentId], references: [id])
+
+  @@map("intermediate_documents")
+}
+
+model ResidentStory {
+  id                  Int       @id @default(autoincrement()) @map("id")
+  lifestylePreference Json?     @map("lifestyle_preference")
+  healthWellness      Json?     @map("health_wellness")
+  lifeStory           Json?     @map("life_story")
+  socialParticipation Json?     @map("social_participation")
+  residentId          Int?      @map("resident_id")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime? @map("updated_at")
+  createdBy           Int?      @map("created_by")
+  updatedBy           Int?      @map("updated_by")
+
+  //Relation
+  resident            Resident? @relation(fields: [residentId], references: [id])
+  creator User?     @relation("ResidentStoryCreator", fields: [createdBy], references: [id])
+  updater User?     @relation("ResidentStoryUpdater", fields: [updatedBy], references: [id])
+
+
+  @@map("resident_story")
+}
+
+model Careplan {
+  id            Int       @id @default(autoincrement()) @map("id")
+  category      String?   @map("category") @db.VarChar(255)
+  taskName      String?   @map("task_name") @db.VarChar(255)
+  instruction   String?   @map("instruction") @db.VarChar(1000)
+  frequency     Int?      @map("frequency")
+  frequencyType String?   @map("frequency_type") @db.VarChar(50)
+  frequencyData Json?     @map("frequency_data")
+  shiftTime     Json?     @map("shift_time")
+  startDate     DateTime? @map("start_date")
+  endDate       DateTime? @map("end_date")
+  status        String?   @map("status") @db.VarChar(50)
+  residentId    Int?      @map("resident_id")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime? @map("updated_at")
+  createdBy     Int?      @map("created_by")
+  updatedBy     Int?      @map("updated_by")
+
+  // Relation
+  resident Resident? @relation(fields: [residentId], references: [id])
+  creator User?     @relation("CareplanCreator", fields: [createdBy], references: [id])
+  updater User?     @relation("CareplanUpdater", fields: [updatedBy], references: [id])
+
+  @@map("careplan")
+}
+
+
+model Vitals {
+  id                    Int       @id @default(autoincrement()) @map("id")
+  date                  DateTime? @map("date")
+  time                  String?   @map("time") @db.VarChar(50)
+  weight                Float?    @map("weight")
+  temperature           Float?    @map("temperature")
+  temperatureType       String?   @map("temperature_type") @db.VarChar(50)
+  pulse                 Float?    @map("pulse")
+  systolicBloodPressure   Float?    @map("systolic_blood_pressure")
+  diastolicBloodPressure  Float?    @map("diastolic_blood_pressure")
+  bloodPressurePosition String?   @map("blood_pressure_position") @db.VarChar(50)
+  respiratoryRate       Float?    @map("respiratory_rate")
+  oxygenSaturation      Float?    @map("oxygen_saturation")
+  oxygenSaturationUnit  String?   @map("oxygen_saturation_unit") @db.VarChar(50)
+  bloodSugar            Float?    @map("blood_sugar")
+  bloodSugarCondition   String?   @map("blood_sugar_condition") @db.VarChar(100)
+  note                  String?   @map("note") @db.VarChar(1000)
+  residentId            Int?      @map("resident_id")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime? @map("updated_at")
+  createdBy             Int?      @map("created_by")
+  updatedBy             Int?      @map("updated_by")
+
+
+  // Relations
+  resident Resident? @relation(fields: [residentId], references: [id])
+  creator User?     @relation("VitalsCreator", fields: [createdBy], references: [id])
+  updater User?     @relation("VitalsUpdater", fields: [updatedBy], references: [id])
+
+
+  @@map("vitals")
+}
+
+model Notes {
+  id         Int       @id @default(autoincrement()) @map("id")
+  noteName   String?   @map("note_name") @db.VarChar(255)
+  tags       Json?     @map("tags")
+  date       DateTime? @map("date")
+  time       String?   @map("time") @db.VarChar(50)
+  status     String?   @map("status") @db.VarChar(50)
+  residentId Int?      @map("resident_id")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime? @map("updated_at")
+  createdBy  Int?      @map("created_by")
+  updatedBy  Int?      @map("updated_by")
+
+  // Relations
+  resident Resident? @relation(fields: [residentId], references: [id])
+  creator User?     @relation("NotesCreator", fields: [createdBy], references: [id])
+  updater User?     @relation("NotesUpdater", fields: [updatedBy], references: [id])
+  incidentAlerts IncidentAlert[]
+
+
+  comments Comments[]
+
+
+  @@map("notes")
+}
+
+model Incidents {
+  id              Int       @id @default(autoincrement()) @map("id")
+  incident        String?   @map("incident") @db.VarChar(1000)
+  tags            Json?     @map("tags")
+  incidentDate    DateTime? @map("incident_date")
+  incidentTime    String?   @map("incident_time") @db.VarChar(50)
+  location        String?   @map("location") @db.VarChar(255)
+  relatedInjuries String?   @map("related_injuries") @db.VarChar(1000)
+  notify          Json?     @map("notify")
+  status           String?    @db.VarChar(50)   @map("status")
+  witnessToIncident String?  @map("witness_to_incident") @db.VarChar(1000)
+  firstAid        Boolean?  @map("first_aid")
+  firstAidDescription String? @map("first_aid_description") @db.VarChar(1000)
+  shiftSupervisor Int?   @map("shift_supervisor") 
+  transported     Boolean?  @map("transported")
+  nurseProgress   String?   @map("nurse_progress") @db.VarChar(1000)
+  signature       String?   @map("signature") @db.VarChar(255)
+  residentId      Int?      @map("resident_id")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime? @map("updated_at")
+  createdBy        Int?       @map("created_by")
+  updatedBy        Int?       @map("updated_by")
+
+  // Relation
+  resident Resident? @relation(fields: [residentId], references: [id])
+  creator User?     @relation("IncidentsCreator", fields: [createdBy], references: [id])
+  updater User?     @relation("IncidentsUpdater", fields: [updatedBy], references: [id])
+  shiftSupervisorUser User? @relation("ShiftSupervisor", fields: [shiftSupervisor], references: [id])
+  comments Comments[]
+  documents Document[]
+  incidentAlerts IncidentAlert[]
+
+
+  @@map("incidents")
+}
+
+model IncidentAlert {
+  id            Int       @id @default(autoincrement()) @map("id")
+  incidentId    Int?      @map("incident_id")
+  noteId        Int?      @map("note_id")
+  alertDuration String?   @map("alert_duration") @db.VarChar(50)
+  alertInstructions String?   @map("alert_instructions") @db.VarChar(1000)
+  afterHourAction String?   @map("after_hour_action") @db.VarChar(1000)
+  startDate DateTime? @map("start_date")
+  endDate DateTime? @map("end_date")
+  status String?   @map("status") @db.VarChar(50)
+  isSent Boolean?  @map("is_sent") @default(false)
+  lastSentAt DateTime? @map("last_sent_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime? @map("updated_at")
+  createdBy     Int?      @map("created_by")
+  updatedBy     Int?      @map("updated_by")
+
+  // Relation
+  incident Incidents? @relation(fields: [incidentId], references: [id])
+  creator User?     @relation("IncidentAlertCreator", fields: [createdBy], references: [id])
+  updater User?     @relation("IncidentAlertUpdater", fields: [updatedBy], references: [id])
+  note Notes? @relation(fields: [noteId], references: [id])
+
+
+  @@map("incident_alert")
+}
+
+model Schedule {
+  id                        Int       @id @default(autoincrement()) @map("id")
+  title                     String?   @map("title") @db.VarChar(255)
+  startDate                 DateTime? @map("start_date")
+  startTime                 String?   @map("start_time") @db.VarChar(50)
+  endTime                   String?   @map("end_time") @db.VarChar(50)
+  duration                  String?   @map("duration") @db.VarChar(100)
+  assignedStaff             Int?      @map("assigned_staff")
+  notifyResponsiblePerson   Boolean?  @default(false) @map("notify_responsible_person")
+  notifyPrimaryCareProvider Boolean?  @default(false) @map("notify_primary_care_provider")
+  notifyPlacementAgent      Boolean?  @default(false) @map("notify_placement_agent")
+  notifyOther               Boolean?  @default(false) @map("notify_other")
+  other                     String?   @map("other") @db.VarChar(255)
+  note                      String?   @map("note") @db.VarChar(1000)
+  residentId                Int?      @map("resident_id")
+  createdAt                 DateTime  @default(now()) @map("created_at")
+  updatedAt                 DateTime? @map("updated_at")
+
+  // Relation
+  resident          Resident? @relation(fields: [residentId], references: [id])
+  assignedStaffUser User?     @relation("AssignedStaff", fields: [assignedStaff], references: [id])
+
+  @@map("schedule")
+}
+
+model Otp {
+  id         Int       @id @default(autoincrement()) @map("id")
+  otpValue   String?   @map("otp_value") @db.VarChar(10)
+  userId     Int?      @map("user_id")
+  maxRetries Int?      @map("max_retries")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime? @map("updated_at")
+  // Relation
+  user       User?     @relation(fields: [userId], references: [id])
+
+  @@map("otp")
+}
+
+model Audit {
+  id             Int       @id @default(autoincrement()) @map("id")
+  method         String?   @map("method") @db.VarChar(20)
+  endPoint       String?   @map("end_point") @db.VarChar(500)
+  ipAddress      String?   @map("ip_address") @db.VarChar(100)
+  requestBody    Json?     @map("request_body")
+  responseBody   Json?     @map("response_body")
+  statusCode     Int?      @map("status_code")
+  requestHeaders Json?     @map("request_headers")
+  responseTimeMs Int?      @map("response_time_ms")
+  userId         Int?      @map("user_id")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime? @map("updated_at")
+
+  //Relation
+  user User? @relation(fields: [userId], references: [id])
+
+  @@map("audit")
+}
+
+model AdmissionDetails {
+  id                 Int       @id @default(autoincrement()) @map("id")
+  community          String?   @map("community") @db.VarChar(255)
+  moveInDate         DateTime? @map("move_in_date")
+  isAsSoonAsPossible Boolean   @default(false) @map("is_as_soon_as_possible")
+  summaryNotes       String?   @map("summary_notes") @db.VarChar(2000)
+  residentId         Int       @map("resident_id")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime? @map("updated_at")
+  // relation to Resident (required)
+  resident           Resident  @relation(fields: [residentId], references: [id])
+
+  @@map("admission_details")
+}
+
+model Diet {
+  id              Int       @id @default(autoincrement()) @map("id")
+  diet            Json?     @map("diet")
+  foodAllergies   Json?     @map("food_allergies")
+  residentId      Int?      @map("resident_id")
+  additionalNotes String?   @map("additional_notes") @db.VarChar(1000)
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime? @map("updated_at")
+
+  // Relation
+  resident Resident? @relation(fields: [residentId], references: [id])
+
+  @@map("diet")
+}
+
+model DiagnosesAndAllergies {
+  id         Int       @id @default(autoincrement()) @map("id")
+  diagnoses  Json?     @map("diagnoses")
+  allergies  Json?     @map("allergies")
+  residentId Int?      @map("resident_id")
+  notes      String?   @map("notes") @db.VarChar(1000)
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime? @map("updated_at")
+
+  // Relation
+  resident Resident? @relation(fields: [residentId], references: [id])
+
+  @@map("diagnoses_and_allergies")
+}
+
+model Hospital {
+  id        Int       @id @default(autoincrement()) @map("id")
+  name      String?   @map("name") @db.VarChar(255)
+  address   String?   @map("address") @db.VarChar(500)
+  contact   String?   @map("contact") @db.VarChar(20)
+  fax       String?   @map("fax") @db.VarChar(50)
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @map("updated_at")
+
+  // Relation
+  residents Resident[] @relation("ResidentHospital")
+
+  @@map("hospital")
+}
+
+model Immunization {
+  id                  Int       @id @default(autoincrement()) @map("id")
+  name                String?   @map("name") @db.VarChar(255)
+  route               String?   @map("route") @db.VarChar(255)
+  administeredDate    DateTime? @map("administered_date")
+  administeredById    Int?      @map("administered_by_id")
+  site                String?   @map("site") @db.VarChar(100)
+  vaccineManufacturer String?   @map("vaccine_manufacturer") @db.VarChar(255)
+  lotNumber           String?   @map("lot_number") @db.VarChar(100)
+  residentId          Int?      @map("resident_id")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime? @map("updated_at")
+
+  // Relations
+  resident       Resident? @relation(fields: [residentId], references: [id])
+  administeredBy User?     @relation(fields: [administeredById], references: [id])
+
+  @@map("immunization")
+}
+
+model Comments {
+  id         Int       @id @default(autoincrement()) @map("id")
+  comment    String?   @map("comment")
+  noteId     Int?      @map("note_id")
+  incidentId Int?      @map("incident_id")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime? @map("updated_at")
+  createdBy  Int?      @map("created_by")
+  updatedBy  Int?      @map("updated_by")
+
+  // Relation
+  note Notes? @relation(fields: [noteId], references: [id])
+  incident Incidents? @relation(fields: [incidentId], references: [id])
+  creator User?     @relation("CommentsCreator", fields: [createdBy], references: [id])
+  updater User?     @relation("CommentsUpdater", fields: [updatedBy], references: [id])
+
+  @@map("comments")
+}
+
+model Document {
+  id         Int       @id @default(autoincrement()) @map("id")
+  document   String?   @db.VarChar(255)   @map("document")
+  incidentId Int?      @map("incident_id")
+  residentId Int?      @map("resident_id")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime? @map("updated_at")
+  // Relation
+  incident Incidents? @relation(fields: [incidentId], references: [id])
+  resident Resident? @relation(fields: [residentId], references: [id])
+
+  @@map("document")
+}
+
+model MarkedAsAway {
+  id         Int       @id @default(autoincrement()) @map("id")
+  startDate  DateTime? @map("start_date")
+  startTime String?   @map("start_time") @db.VarChar(50)
+  reason String?   @map("reason") @db.VarChar(255)
+  returnDate DateTime? @map("return_date")
+  returnTime String?   @map("return_time") @db.VarChar(50)
+  residentId Int?      @map("resident_id")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime? @map("updated_at")
+  // Relation
+  resident Resident? @relation(fields: [residentId], references: [id])
+
+  @@map("marked_as_away")
+}
