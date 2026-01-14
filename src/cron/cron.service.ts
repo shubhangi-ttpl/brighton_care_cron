@@ -238,6 +238,7 @@ export class CronService {
           continue;
         }
         console.log(alert, 'alert');
+        this.logger.log(JSON.stringify(alert, null, 2), 'alert');
 
         const responsiblePersons = alert.note.resident?.responsiblePerson || [];
         console.log(
