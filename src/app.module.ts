@@ -1,22 +1,46 @@
-import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { BullModule } from '@nestjs/bullmq';
 import { AlertModule } from './alert/alert.module';
 import { CronModule } from './cron/cron.module';
+import { Module } from '@nestjs/common';
+
+const getRedisConnection = () => {
+  const useTls =
+    process.env.REDIS_TLS === 'true' || process.env.REDIS_TLS === '1';
+
+  return {
+    host: process.env.REDIS_HOST,
+    port: parseInt(process.env.REDIS_PORT ?? '6379'),
+    password: process.env.REDIS_PASSWORD,
+    username: process.env.REDIS_USERNAME ?? 'default',
+    maxRetriesPerRequest: null,
+    ...(useTls
+      ? {
+          tls: {
+            rejectUnauthorized: false,
+          },
+        }
+      : {}),
+    enableReadyCheck: true,
+    lazyConnect: false,
+    connectTimeout: 10000,
+    retryStrategy: (times: number) => {
+      const delay = Math.min(times * 200, 2000);
+      return delay;
+    },
+  };
+};
 
 @Module({
   imports: [
     BullModule.forRoot({
-      connection: {
-        host: 'localhost',
-        port: 6379,
-      },
+      connection: getRedisConnection(),
       defaultJobOptions: {
-        attempts: 3, //if the job fails, it will be retried 3 times
-        removeOnComplete: 1000, //remove the job from the queue if it is completed
-        removeOnFail: 1000, //remove the job from the queue if it fails
-        backoff: 2000, //backoff the job if it fails
+        attempts: 3,
+        removeOnComplete: 1000,
+        removeOnFail: 1000,
+        backoff: 2000,
       },
     }),
     AlertModule,
