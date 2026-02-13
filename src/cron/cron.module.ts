@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { Logger, Module } from '@nestjs/common';
 import { ScheduleModule } from '@nestjs/schedule';
 import { BullModule } from '@nestjs/bullmq';
@@ -9,6 +7,7 @@ import {
   INCIDENT_ALERT_QUEUE,
   NOTE_ALERT_QUEUE,
 } from '../common/constants/bull.constants';
+import { RedisService } from '../utils/redis.service';
 
 @Module({
   imports: [
@@ -16,6 +15,6 @@ import {
     BullModule.registerQueue({ name: INCIDENT_ALERT_QUEUE }),
     BullModule.registerQueue({ name: NOTE_ALERT_QUEUE }),
   ],
-  providers: [CronService, PrismaClient, Logger],
+  providers: [CronService, PrismaClient, Logger, RedisService],
 })
 export class CronModule {}

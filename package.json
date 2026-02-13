@@ -28,8 +28,11 @@
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/schedule": "^6.0.1",
     "@prisma/client": "6.18.0",
+    "@types/axios": "^0.9.36",
+    "axios": "^1.13.5",
     "bullmq": "^5.65.0",
     "dotenv": "^17.2.3",
+    "redis": "^5.10.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
   },

@@ -25,6 +25,7 @@ const getRedisConnection = () => {
     enableReadyCheck: true,
     lazyConnect: false,
     connectTimeout: 10000,
+    skipVersionCheck: true,
     retryStrategy: (times: number) => {
       const delay = Math.min(times * 200, 2000);
       return delay;
