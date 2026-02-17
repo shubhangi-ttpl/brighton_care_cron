@@ -1,8 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-redundant-type-constituents */
 
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -10,7 +5,6 @@ import { PrismaClient, Prisma } from '@prisma/client';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
-import axios from 'axios';
 
 import { CommonStatus } from '../common/enums/common-status.enum';
 import {
@@ -21,7 +15,7 @@ import {
 } from '../common/constants/bull.constants';
 import { IncidentAlertJobData } from '../alert/interfaces/incident-alert-job.interface';
 import { NoteAlertJobData } from '../alert/interfaces/note-alert-job.interface';
-import { RedisService } from '../utils/redis.service';
+import { AppService } from 'src/app.service';
 
 @Injectable()
 export class CronService {
@@ -32,7 +26,7 @@ export class CronService {
     private readonly incidentAlertQueue: Queue,
     @InjectQueue(NOTE_ALERT_QUEUE)
     private readonly noteAlertQueue: Queue,
-    private redisService: RedisService,
+    private appService: AppService,
   ) {}
 
   @Cron(CronExpression.EVERY_MINUTE)
@@ -475,178 +469,9 @@ export class CronService {
     return emailValue === null || typeof emailValue === 'string';
   }
 
-  @Cron(CronExpression.EVERY_HOUR)
+  @Cron(CronExpression.EVERY_10_SECONDS)
   async logHourly(): Promise<void> {
     this.logger.log('Hourly cron job executed');
-    await this.selfHealRedisSapeyData();
-  }
-
-  async selfHealRedisSapeyData() {
-    try {
-      this.logger.log('Starting self-heal process for Redis Sapey data');
-
-      const sessionCookie = await this.loginAndGetSessionCookie();
-      if (!sessionCookie) {
-        this.logger.warn('Login failed, skipping self-heal');
-        return;
-      }
-
-      const sapeyFacilityCodes = process.env.SAPEY_FACILITY_CODES;
-      if (!sapeyFacilityCodes) {
-        this.logger.warn(
-          'SAPEY_FACILITY_CODES env variable not set, skipping self-heal',
-        );
-        return;
-      }
-
-      const facilityCodes: Array<{
-        name: string;
-        code: string;
-        'facility-id': string;
-      }> = JSON.parse(sapeyFacilityCodes);
-
-      if (!facilityCodes.length) {
-        this.logger.warn('No facility codes found in env, skipping');
-        return;
-      }
-
-      this.logger.log(`Loaded ${facilityCodes.length} facility codes from env`);
-
-      let apiKeys: any[] = [];
-      try {
-        const response = await axios.get(
-          `${process.env.SAPEY_BASE_URL}/api/auth/api-key/list`,
-          { headers: { Cookie: sessionCookie } },
-        );
-        apiKeys = Array.isArray(response.data) ? response.data : [];
-      } catch (error) {
-        this.logger.warn(
-          `Failed to fetch API keys from Sapey API: ${(error as Error).message}`,
-        );
-      }
-
-      this.logger.log(`Fetched ${apiKeys.length} API keys from Sapey API`);
-
-      if (!apiKeys.length) {
-        this.logger.log(
-          'No API keys found in Sapey API, creating tokens for all facilities',
-        );
-        for (const facility of facilityCodes) {
-          await this.createAndCacheToken(facility, sessionCookie);
-        }
-        this.logger.log('Self-heal completed - created all tokens from env');
-        return;
-      }
-
-      const sortedKeys = [...apiKeys].sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-      );
-
-      const latestByName = new Map<string, any>();
-      for (const key of sortedKeys) {
-        if (key.name && !latestByName.has(key.name)) {
-          latestByName.set(key.name, key);
-        }
-      }
-
-      this.logger.log(
-        `Deduplicated API keys: ${latestByName.size} unique names from ${apiKeys.length} total`,
-      );
-
-      for (const facility of facilityCodes) {
-        const cachedToken = await this.redisService.getData(facility.name);
-
-        if (cachedToken) {
-          this.logger.log(
-            `Token already cached in Redis for: ${facility.name}`,
-          );
-          continue;
-        }
-
-        const existsInApi = latestByName.has(facility.name);
-        if (existsInApi) {
-          this.logger.log(
-            `Token exists in API but missing from Redis for: ${facility.name}. Creating new token.`,
-          );
-        } else {
-          this.logger.log(
-            `Token missing from both API and Redis for: ${facility.name}. Creating new token.`,
-          );
-        }
-
-        await this.createAndCacheToken(facility, sessionCookie);
-      }
-
-      this.logger.log('Self-heal process for Redis Sapey data completed');
-    } catch (error) {
-      this.logger.error('Self-heal process failed', (error as Error).stack);
-    }
-  }
-
-  private async createAndCacheToken(
-    facility: { name: string; code: string; 'facility-id': string },
-    sessionCookie: string,
-  ): Promise<void> {
-    try {
-      const response = await axios.post(
-        `${process.env.SAPEY_BASE_URL}/api/auth/api-key/create`,
-        {
-          name: facility.name,
-          expiresIn: null,
-          metadata: {
-            organizationId: process.env.SAPEY_ORG_ID,
-            facilityId: facility['facility-id'],
-            ehrSystem: facility.code,
-          },
-        },
-        { headers: { Cookie: sessionCookie } },
-      );
-
-      await this.redisService.setData(
-        facility.name,
-        JSON.stringify(response.data),
-      );
-      this.logger.log(`Created and cached token for: ${facility.name}`);
-    } catch (error) {
-      this.logger.error(
-        `Failed to create/cache token for ${facility.name}: ${(error as Error).message}`,
-      );
-    }
-  }
-
-  private async loginAndGetSessionCookie(): Promise<string | null> {
-    try {
-      const email = process.env.SAPEY_LOGIN_EMAIL;
-      const password = process.env.SAPEY_LOGIN_PASSWORD;
-
-      if (!email || !password) {
-        this.logger.warn(
-          'SAPEY_LOGIN_EMAIL or SAPEY_LOGIN_PASSWORD env variable not set',
-        );
-        return null;
-      }
-
-      const response = await axios.post(
-        `${process.env.SAPEY_BASE_URL}/api/auth/sign-in/email`,
-        { email, password },
-      );
-
-      const setCookieHeaders = response.headers['set-cookie'];
-      if (!setCookieHeaders || !setCookieHeaders.length) {
-        this.logger.warn('No set-cookie header in login response');
-        return null;
-      }
-
-      const cookies = setCookieHeaders
-        .map((cookie: string) => cookie.split(';')[0])
-        .join('; ');
-
-      this.logger.log(`Logged in as ${email}`);
-      return cookies;
-    } catch (error) {
-      this.logger.error(`Failed to login: ${(error as Error).message}`);
-      return null;
-    }
+    await this.appService.selfHealRedisSapeyData();
   }
 }

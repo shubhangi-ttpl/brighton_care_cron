@@ -3,7 +3,9 @@ import { AppService } from './app.service';
 import { BullModule } from '@nestjs/bullmq';
 import { AlertModule } from './alert/alert.module';
 import { CronModule } from './cron/cron.module';
-import { Module } from '@nestjs/common';
+import { Logger, Module } from '@nestjs/common';
+import { RedisService } from './utils/redis.service';
+import { PrismaClient } from '@prisma/client';
 
 const getRedisConnection = () => {
   const useTls =
@@ -48,6 +50,6 @@ const getRedisConnection = () => {
     CronModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, RedisService, Logger, PrismaClient],
 })
 export class AppModule {}

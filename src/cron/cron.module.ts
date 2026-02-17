@@ -8,6 +8,7 @@ import {
   NOTE_ALERT_QUEUE,
 } from '../common/constants/bull.constants';
 import { RedisService } from '../utils/redis.service';
+import { AppService } from 'src/app.service';
 
 @Module({
   imports: [
@@ -15,6 +16,6 @@ import { RedisService } from '../utils/redis.service';
     BullModule.registerQueue({ name: INCIDENT_ALERT_QUEUE }),
     BullModule.registerQueue({ name: NOTE_ALERT_QUEUE }),
   ],
-  providers: [CronService, PrismaClient, Logger, RedisService],
+  providers: [CronService, PrismaClient, Logger, RedisService, AppService],
 })
 export class CronModule {}
